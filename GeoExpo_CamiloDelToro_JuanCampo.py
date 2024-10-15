@@ -4,17 +4,17 @@ import pygame_gui
 # Inicializar Pygame
 pygame.init()
 
-# Crear ventana
-screen = pygame.display.set_mode((1000, 800))  # Pantalla grande
+# Configuración de la ventana
+screen = pygame.display.set_mode((1000, 800))
 pygame.display.set_caption("ThermoSim")
 
-# Crear el manejador de interfaz de pygame_gui
-manager = pygame_gui.UIManager((1000, 800))  # Ajustar tamaño del manejador
+# Crear el manejador de interfaz de pygame_gui sin referencia al archivo 'theme.json'
+manager = pygame_gui.UIManager((1000, 800))
 
 # Colores
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
-GREY = (200, 200, 200)  # Color para el borde de las cajas de texto
+GREY = (200, 200, 200)
 
 # Crear fuentes
 font = pygame.font.Font(None, 36)
@@ -42,6 +42,31 @@ def limpiar_elementos():
             element.kill()
     for key in ui_elements.keys():
         ui_elements[key] = []
+
+# Funciones de conversión de unidades
+
+# Convertir temperatura a °C
+def convertir_a_celsius(valor, unidad):
+    if unidad == "°C":
+        return valor
+    elif unidad == "°F":
+        return (valor - 32) * 5.0 / 9.0
+    elif unidad == "K":
+        return valor - 273.15
+
+# Convertir área a m²
+def convertir_a_m2(valor, unidad):
+    if unidad == "m²":
+        return valor
+    elif unidad == "cm²":
+        return valor / 10000  # 1 m² = 10,000 cm²
+
+# Convertir grosor a metros
+def convertir_a_metros(valor, unidad):
+    if unidad == "m":
+        return valor
+    elif unidad == "cm":
+        return valor / 100  # 1 m = 100 cm
 
 # Función para crear el menú principal
 def mostrar_menu():
@@ -72,11 +97,11 @@ def mostrar_menu():
         )
         ui_elements["menu"].extend([btn_conveccion, btn_conduccion, btn_radiacion])
 
-# Función para crear el botón de retorno
+# Función para crear el botón de retorno al menú
 def crear_boton_retorno():
     if not any(isinstance(el, pygame_gui.elements.UIButton) and el.text == "Retornar al Menú" for el in ui_elements[pantalla_actual]):
         btn_retorno = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect((20, 20), (150, 50)),  # Posición superior izquierda
+            relative_rect=pygame.Rect((20, 20), (150, 50)),
             text="Retornar al Menú",
             manager=manager
         )
@@ -177,6 +202,7 @@ def mostrar_conveccion():
             manager=manager
         )
         ui_elements["conveccion"].append(lbl_resultado)
+        mostrar_conveccion.resultado = None  # Resetear para evitar múltiples etiquetas
 
 # Función para mostrar la simulación de conducción
 def mostrar_conduccion():
@@ -253,6 +279,7 @@ def mostrar_conduccion():
             manager=manager
         )
         ui_elements["conduccion"].append(lbl_resultado)
+        mostrar_conduccion.resultado = None  # Resetear para evitar múltiples etiquetas
 
 # Función para mostrar la simulación de radiación
 def mostrar_radiacion():
@@ -269,7 +296,7 @@ def mostrar_radiacion():
         etiquetas = [
             ("Temp Objeto:", (50, 150), ["°C", "°F", "K"], "K"),
             ("Temp Ambiente:", (50, 200), ["°C", "°F", "K"], "K"),
-            ("Emisividad:", (50, 250), ["-", "-"], "-"),  # Emisividad es adimensional
+            ("Emisividad:", (50, 250), ["-"], "-"),  # Emisividad es adimensional
             ("Área:", (50, 300), ["m²", "cm²"], "m²")
         ]
 
@@ -332,6 +359,7 @@ def mostrar_radiacion():
             manager=manager
         )
         ui_elements["radiacion"].append(lbl_resultado)
+        mostrar_radiacion.resultado = None  # Resetear para evitar múltiples etiquetas
 
 # Bucle principal
 clock = pygame.time.Clock()
@@ -360,74 +388,108 @@ while ejecutando:
                 if pantalla_actual == "conveccion":
                     try:
                         # Obtener los valores de las cajas de texto
-                        temp_superficie = float(mostrar_conveccion.inputs[0].get_text())
-                        temp_fluido = float(mostrar_conveccion.inputs[1].get_text())
-                        coef_conveccion = float(mostrar_conveccion.inputs[2].get_text())
-                        area = float(mostrar_conveccion.inputs[3].get_text())
+                        temp_superficie_text = mostrar_conveccion.inputs[0].get_text()
+                        temp_fluido_text = mostrar_conveccion.inputs[1].get_text()
+                        coef_conveccion_text = mostrar_conveccion.inputs[2].get_text()
+                        area_text = mostrar_conveccion.inputs[3].get_text()
 
-                        # Obtener las unidades seleccionadas
-                        unidad_temp_superficie = mostrar_conveccion.dropdowns[0].selected_option
-                        unidad_temp_fluido = mostrar_conveccion.dropdowns[1].selected_option
-                        unidad_coef_conveccion = mostrar_conveccion.dropdowns[2].selected_option
-                        unidad_area = mostrar_conveccion.dropdowns[3].selected_option
+                        # Verificar si las cajas de texto tienen valores válidos
+                        if temp_superficie_text and temp_fluido_text and coef_conveccion_text and area_text:
+                            temp_superficie = float(temp_superficie_text)
+                            temp_fluido = float(temp_fluido_text)
+                            coef_conveccion = float(coef_conveccion_text)
+                            area = float(area_text)
 
-                        # Aquí podrías implementar conversiones de unidades si es necesario
-                        # Por ejemplo, convertir todo a °C, m², etc.
+                            # Obtener las unidades seleccionadas
+                            unidad_temp_superficie = mostrar_conveccion.dropdowns[0].selected_option
+                            unidad_temp_fluido = mostrar_conveccion.dropdowns[1].selected_option
+                            unidad_area = mostrar_conveccion.dropdowns[3].selected_option
 
-                        # Realizar el cálculo
-                        resultado = calcular_conveccion(temp_superficie, temp_fluido, coef_conveccion, area)
-                        mostrar_conveccion.resultado = resultado
+                            # Convertir unidades a las unidades base
+                            temp_superficie = convertir_a_celsius(temp_superficie, unidad_temp_superficie)
+                            temp_fluido = convertir_a_celsius(temp_fluido, unidad_temp_fluido)
+                            area = convertir_a_m2(area, unidad_area)
+
+                            # Realizar el cálculo
+                            resultado = calcular_conveccion(temp_superficie, temp_fluido, coef_conveccion, area)
+                            mostrar_conveccion.resultado = resultado
+                        else:
+                            mostrar_conveccion.resultado = "Error: Valores inválidos"
                     except ValueError:
-                        mostrar_conveccion.resultado = None  # O manejar el error apropiadamente
+                        # Manejar el error apropiadamente (por ejemplo, mostrar un mensaje de error)
+                        mostrar_conveccion.resultado = "Error: Entrada no válida"
 
                 elif pantalla_actual == "conduccion":
                     try:
                         # Obtener los valores de las cajas de texto
-                        temp_superficie = float(mostrar_conduccion.inputs[0].get_text())
-                        temp_base = float(mostrar_conduccion.inputs[1].get_text())
-                        conductividad = float(mostrar_conduccion.inputs[2].get_text())
-                        area = float(mostrar_conduccion.inputs[3].get_text())
-                        grosor = float(mostrar_conduccion.inputs[4].get_text())
+                        temp_superficie_text = mostrar_conduccion.inputs[0].get_text()
+                        temp_base_text = mostrar_conduccion.inputs[1].get_text()
+                        conductividad_text = mostrar_conduccion.inputs[2].get_text()
+                        area_text = mostrar_conduccion.inputs[3].get_text()
+                        grosor_text = mostrar_conduccion.inputs[4].get_text()
 
-                        # Obtener las unidades seleccionadas
-                        unidad_temp_superficie = mostrar_conduccion.dropdowns[0].selected_option
-                        unidad_temp_base = mostrar_conduccion.dropdowns[1].selected_option
-                        unidad_conductividad = mostrar_conduccion.dropdowns[2].selected_option
-                        unidad_area = mostrar_conduccion.dropdowns[3].selected_option
-                        unidad_grosor = mostrar_conduccion.dropdowns[4].selected_option
+                        # Verificar si las cajas de texto tienen valores válidos
+                        if temp_superficie_text and temp_base_text and conductividad_text and area_text and grosor_text:
+                            temp_superficie = float(temp_superficie_text)
+                            temp_base = float(temp_base_text)
+                            conductividad = float(conductividad_text)
+                            area = float(area_text)
+                            grosor = float(grosor_text)
 
-                        # Aquí podrías implementar conversiones de unidades si es necesario
+                            # Obtener las unidades seleccionadas
+                            unidad_temp_superficie = mostrar_conduccion.dropdowns[0].selected_option
+                            unidad_temp_base = mostrar_conduccion.dropdowns[1].selected_option
+                            unidad_area = mostrar_conduccion.dropdowns[3].selected_option
+                            unidad_grosor = mostrar_conduccion.dropdowns[4].selected_option
 
-                        # Realizar el cálculo
-                        resultado = calcular_conduccion(temp_superficie, temp_base, conductividad, area, grosor)
-                        mostrar_conduccion.resultado = resultado
+                            # Convertir unidades a las unidades base
+                            temp_superficie = convertir_a_celsius(temp_superficie, unidad_temp_superficie)
+                            temp_base = convertir_a_celsius(temp_base, unidad_temp_base)
+                            area = convertir_a_m2(area, unidad_area)
+                            grosor = convertir_a_metros(grosor, unidad_grosor)
+
+                            # Realizar el cálculo
+                            resultado = calcular_conduccion(temp_superficie, temp_base, conductividad, area, grosor)
+                            mostrar_conduccion.resultado = resultado
+                        else:
+                            mostrar_conduccion.resultado = "Error: Valores inválidos"
                     except ValueError:
-                        mostrar_conduccion.resultado = None  # O manejar el error apropiadamente
+                        # Manejar el error apropiadamente
+                        mostrar_conduccion.resultado = "Error: Entrada no válida"
 
                 elif pantalla_actual == "radiacion":
                     try:
                         # Obtener los valores de las cajas de texto
-                        temp_objeto = float(mostrar_radiacion.inputs[0].get_text())
-                        temp_ambiente = float(mostrar_radiacion.inputs[1].get_text())
+                        temp_objeto_text = mostrar_radiacion.inputs[0].get_text()
+                        temp_ambiente_text = mostrar_radiacion.inputs[1].get_text()
                         emisividad_text = mostrar_radiacion.inputs[2].get_text()
-                        area = float(mostrar_radiacion.inputs[3].get_text())
+                        area_text = mostrar_radiacion.inputs[3].get_text()
 
-                        # Obtener las unidades seleccionadas
-                        unidad_temp_objeto = mostrar_radiacion.dropdowns[0].selected_option
-                        unidad_temp_ambiente = mostrar_radiacion.dropdowns[1].selected_option
-                        # Emisividad no tiene unidad, es adimensional
-                        unidad_area = mostrar_radiacion.dropdowns[3].selected_option
+                        # Verificar si las cajas de texto tienen valores válidos
+                        if temp_objeto_text and temp_ambiente_text and emisividad_text and area_text:
+                            temp_objeto = float(temp_objeto_text)
+                            temp_ambiente = float(temp_ambiente_text)
+                            emisividad = float(emisividad_text)
+                            area = float(area_text)
 
-                        # Convertir emisividad a float si es posible
-                        emisividad = float(emisividad_text)
+                            # Obtener las unidades seleccionadas
+                            unidad_temp_objeto = mostrar_radiacion.dropdowns[0].selected_option
+                            unidad_temp_ambiente = mostrar_radiacion.dropdowns[1].selected_option
+                            unidad_area = mostrar_radiacion.dropdowns[3].selected_option
 
-                        # Aquí podrías implementar conversiones de unidades si es necesario
+                            # Convertir unidades a las unidades base
+                            temp_objeto = convertir_a_celsius(temp_objeto, unidad_temp_objeto) + 273.15  # Convertir a Kelvin
+                            temp_ambiente = convertir_a_celsius(temp_ambiente, unidad_temp_ambiente) + 273.15  # Convertir a Kelvin
+                            area = convertir_a_m2(area, unidad_area)
 
-                        # Realizar el cálculo
-                        resultado = calcular_radiacion(temp_objeto, temp_ambiente, emisividad, area)
-                        mostrar_radiacion.resultado = resultado
+                            # Realizar el cálculo
+                            resultado = calcular_radiacion(temp_objeto, temp_ambiente, emisividad, area)
+                            mostrar_radiacion.resultado = resultado
+                        else:
+                            mostrar_radiacion.resultado = "Error: Valores inválidos"
                     except ValueError:
-                        mostrar_radiacion.resultado = None  # O manejar el error apropiadamente
+                        # Manejar el error apropiadamente
+                        mostrar_radiacion.resultado = "Error: Entrada no válida"
 
         manager.process_events(evento)
 
@@ -448,5 +510,5 @@ while ejecutando:
     # Actualizar pantalla
     pygame.display.flip()
 
-# Salir
+# Salir de Pygame
 pygame.quit()
