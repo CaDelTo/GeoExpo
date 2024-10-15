@@ -43,9 +43,17 @@ def limpiar_elementos():
     for key in ui_elements.keys():
         ui_elements[key] = []
 
+# Función para limpiar solo el resultado anterior
+def limpiar_resultado_anterior():
+    # Limpiar solo las etiquetas de resultado en la pantalla actual
+    for elemento in ui_elements[pantalla_actual]:
+        if isinstance(elemento, pygame_gui.elements.UILabel) and "Transferencia de Calor" in elemento.text:
+            elemento.kill()  # Eliminar el elemento de la pantalla
+    # Remover de la lista de elementos UI
+    ui_elements[pantalla_actual] = [el for el in ui_elements[pantalla_actual] if el.alive()]
+
 # Funciones de conversión de unidades
 
-# Convertir temperatura a °C
 def convertir_a_celsius(valor, unidad):
     if unidad == "°C":
         return valor
@@ -54,14 +62,12 @@ def convertir_a_celsius(valor, unidad):
     elif unidad == "K":
         return valor - 273.15
 
-# Convertir área a m²
 def convertir_a_m2(valor, unidad):
     if unidad == "m²":
         return valor
     elif unidad == "cm²":
         return valor / 10000  # 1 m² = 10,000 cm²
 
-# Convertir grosor a metros
 def convertir_a_metros(valor, unidad):
     if unidad == "m":
         return valor
@@ -71,7 +77,6 @@ def convertir_a_metros(valor, unidad):
 # Función para crear el menú principal
 def mostrar_menu():
     if not ui_elements["menu"]:
-        # Crear título
         lbl_titulo = pygame_gui.elements.UILabel(
             relative_rect=pygame.Rect((350, 100), (300, 50)),
             text="ThermoSim - Menú Principal",
@@ -79,7 +84,6 @@ def mostrar_menu():
         )
         ui_elements["menu"].append(lbl_titulo)
 
-        # Crear botones para seleccionar simulaciones
         btn_conveccion = pygame_gui.elements.UIButton(
             relative_rect=pygame.Rect((400, 250), (200, 50)),
             text="Simulación de Convección",
@@ -109,14 +113,12 @@ def crear_boton_retorno():
 
 # Simulación de Convección
 def calcular_conveccion(temp_superficie, temp_fluido, coef_conveccion, area):
-    # Cálculo del flujo de calor por convección
     delta_T = temp_superficie - temp_fluido
     q = coef_conveccion * area * delta_T  # Transferencia de calor en W
     return q
 
 # Simulación de Conducción
 def calcular_conduccion(temp_superficie, temp_base, conductividad, area, grosor):
-    # Cálculo del flujo de calor por conducción usando la ley de Fourier
     delta_T = temp_superficie - temp_base
     q = (conductividad * area * delta_T) / grosor  # Transferencia de calor en W
     return q
@@ -124,14 +126,12 @@ def calcular_conduccion(temp_superficie, temp_base, conductividad, area, grosor)
 # Simulación de Radiación
 def calcular_radiacion(temp_objeto, temp_ambiente, emisividad, area):
     const_boltzmann = 5.67e-8  # Constante de Stefan-Boltzmann
-    # Cálculo del flujo de calor por radiación
     q = emisividad * area * const_boltzmann * ((temp_objeto**4) - (temp_ambiente**4))  # Transferencia de calor en W
     return q
 
-# Función para mostrar la pantalla de simulación de convección
+# Función para mostrar la simulación de convección
 def mostrar_conveccion():
     if not ui_elements["conveccion"]:
-        # Crear título
         lbl_titulo = pygame_gui.elements.UILabel(
             relative_rect=pygame.Rect((350, 50), (300, 50)),
             text="Simulación de Convección",
@@ -139,7 +139,6 @@ def mostrar_conveccion():
         )
         ui_elements["conveccion"].append(lbl_titulo)
 
-        # Crear etiquetas, cajas de texto y dropdowns
         etiquetas = [
             ("Temp Superficie:", (50, 150), ["°C", "°F", "K"], "°C"),
             ("Temp Fluido:", (50, 200), ["°C", "°F", "K"], "°C"),
@@ -150,7 +149,6 @@ def mostrar_conveccion():
         inputs = []
         dropdowns = []
         for texto, pos, opciones, opcion_inicial in etiquetas:
-            # Crear etiqueta
             lbl = pygame_gui.elements.UILabel(
                 relative_rect=pygame.Rect(pos, (200, 30)),
                 text=texto,
@@ -158,17 +156,15 @@ def mostrar_conveccion():
             )
             ui_elements["conveccion"].append(lbl)
 
-            # Crear caja de texto
             input_box = pygame_gui.elements.UITextEntryLine(
                 relative_rect=pygame.Rect((300, pos[1]), (150, 30)),
                 manager=manager
             )
-            input_box.text_colour = BLACK  # Color del texto
-            input_box.border_colour = GREY   # Color del borde
+            input_box.text_colour = BLACK
+            input_box.border_colour = GREY
             ui_elements["conveccion"].append(input_box)
             inputs.append(input_box)
 
-            # Crear dropdown para unidades
             dropdown = pygame_gui.elements.UIDropDownMenu(
                 options_list=opciones,
                 starting_option=opcion_inicial,
@@ -178,7 +174,6 @@ def mostrar_conveccion():
             ui_elements["conveccion"].append(dropdown)
             dropdowns.append(dropdown)
 
-        # Crear botón de calcular
         btn_calcular = pygame_gui.elements.UIButton(
             relative_rect=pygame.Rect((500, 400), (100, 50)),
             text="Calcular",
@@ -186,15 +181,12 @@ def mostrar_conveccion():
         )
         ui_elements["conveccion"].append(btn_calcular)
 
-        # Almacenar referencias a los campos de entrada y dropdowns
         mostrar_conveccion.inputs = inputs
         mostrar_conveccion.dropdowns = dropdowns
         mostrar_conveccion.resultado = None
 
-    # Crear botón de retorno
     crear_boton_retorno()
 
-    # Mostrar resultado si está disponible
     if mostrar_conveccion.resultado is not None:
         lbl_resultado = pygame_gui.elements.UILabel(
             relative_rect=pygame.Rect((300, 450), (400, 50)),
@@ -202,12 +194,11 @@ def mostrar_conveccion():
             manager=manager
         )
         ui_elements["conveccion"].append(lbl_resultado)
-        mostrar_conveccion.resultado = None  # Resetear para evitar múltiples etiquetas
+        mostrar_conveccion.resultado = None
 
 # Función para mostrar la simulación de conducción
 def mostrar_conduccion():
     if not ui_elements["conduccion"]:
-        # Crear título
         lbl_titulo = pygame_gui.elements.UILabel(
             relative_rect=pygame.Rect((350, 50), (300, 50)),
             text="Simulación de Conducción",
@@ -215,7 +206,6 @@ def mostrar_conduccion():
         )
         ui_elements["conduccion"].append(lbl_titulo)
 
-        # Crear etiquetas, cajas de texto y dropdowns
         etiquetas = [
             ("Temp Superficie:", (50, 150), ["°C", "°F", "K"], "°C"),
             ("Temp Base:", (50, 200), ["°C", "°F", "K"], "°C"),
@@ -227,7 +217,6 @@ def mostrar_conduccion():
         inputs = []
         dropdowns = []
         for texto, pos, opciones, opcion_inicial in etiquetas:
-            # Crear etiqueta
             lbl = pygame_gui.elements.UILabel(
                 relative_rect=pygame.Rect(pos, (200, 30)),
                 text=texto,
@@ -235,17 +224,15 @@ def mostrar_conduccion():
             )
             ui_elements["conduccion"].append(lbl)
 
-            # Crear caja de texto
             input_box = pygame_gui.elements.UITextEntryLine(
                 relative_rect=pygame.Rect((300, pos[1]), (150, 30)),
                 manager=manager
             )
-            input_box.text_colour = BLACK  # Color del texto
-            input_box.border_colour = GREY   # Color del borde
+            input_box.text_colour = BLACK
+            input_box.border_colour = GREY
             ui_elements["conduccion"].append(input_box)
             inputs.append(input_box)
 
-            # Crear dropdown para unidades
             dropdown = pygame_gui.elements.UIDropDownMenu(
                 options_list=opciones,
                 starting_option=opcion_inicial,
@@ -255,7 +242,6 @@ def mostrar_conduccion():
             ui_elements["conduccion"].append(dropdown)
             dropdowns.append(dropdown)
 
-        # Crear botón de calcular
         btn_calcular = pygame_gui.elements.UIButton(
             relative_rect=pygame.Rect((500, 400), (100, 50)),
             text="Calcular",
@@ -263,15 +249,12 @@ def mostrar_conduccion():
         )
         ui_elements["conduccion"].append(btn_calcular)
 
-        # Almacenar referencias a los campos de entrada y dropdowns
         mostrar_conduccion.inputs = inputs
         mostrar_conduccion.dropdowns = dropdowns
         mostrar_conduccion.resultado = None
 
-    # Crear botón de retorno
     crear_boton_retorno()
 
-    # Mostrar resultado si está disponible
     if mostrar_conduccion.resultado is not None:
         lbl_resultado = pygame_gui.elements.UILabel(
             relative_rect=pygame.Rect((300, 450), (400, 50)),
@@ -279,12 +262,11 @@ def mostrar_conduccion():
             manager=manager
         )
         ui_elements["conduccion"].append(lbl_resultado)
-        mostrar_conduccion.resultado = None  # Resetear para evitar múltiples etiquetas
+        mostrar_conduccion.resultado = None
 
 # Función para mostrar la simulación de radiación
 def mostrar_radiacion():
     if not ui_elements["radiacion"]:
-        # Crear título
         lbl_titulo = pygame_gui.elements.UILabel(
             relative_rect=pygame.Rect((350, 50), (300, 50)),
             text="Simulación de Radiación",
@@ -292,18 +274,16 @@ def mostrar_radiacion():
         )
         ui_elements["radiacion"].append(lbl_titulo)
 
-        # Crear etiquetas, cajas de texto y dropdowns
         etiquetas = [
             ("Temp Objeto:", (50, 150), ["°C", "°F", "K"], "K"),
             ("Temp Ambiente:", (50, 200), ["°C", "°F", "K"], "K"),
-            ("Emisividad:", (50, 250), ["-"], "-"),  # Emisividad es adimensional
+            ("Emisividad:", (50, 250), ["-"], "-"),
             ("Área:", (50, 300), ["m²", "cm²"], "m²")
         ]
 
         inputs = []
         dropdowns = []
         for texto, pos, opciones, opcion_inicial in etiquetas:
-            # Crear etiqueta
             lbl = pygame_gui.elements.UILabel(
                 relative_rect=pygame.Rect(pos, (200, 30)),
                 text=texto,
@@ -311,17 +291,15 @@ def mostrar_radiacion():
             )
             ui_elements["radiacion"].append(lbl)
 
-            # Crear caja de texto
             input_box = pygame_gui.elements.UITextEntryLine(
                 relative_rect=pygame.Rect((300, pos[1]), (150, 30)),
                 manager=manager
             )
-            input_box.text_colour = BLACK  # Color del texto
-            input_box.border_colour = GREY   # Color del borde
+            input_box.text_colour = BLACK
+            input_box.border_colour = GREY
             ui_elements["radiacion"].append(input_box)
             inputs.append(input_box)
 
-            # Crear dropdown para unidades (si aplica)
             if texto != "Emisividad:":
                 dropdown = pygame_gui.elements.UIDropDownMenu(
                     options_list=opciones,
@@ -332,10 +310,8 @@ def mostrar_radiacion():
                 ui_elements["radiacion"].append(dropdown)
                 dropdowns.append(dropdown)
             else:
-                # Para Emisividad, que es adimensional, no se necesita dropdown
                 dropdowns.append(None)
 
-        # Crear botón de calcular
         btn_calcular = pygame_gui.elements.UIButton(
             relative_rect=pygame.Rect((500, 350), (100, 50)),
             text="Calcular",
@@ -343,15 +319,12 @@ def mostrar_radiacion():
         )
         ui_elements["radiacion"].append(btn_calcular)
 
-        # Almacenar referencias a los campos de entrada y dropdowns
         mostrar_radiacion.inputs = inputs
         mostrar_radiacion.dropdowns = dropdowns
         mostrar_radiacion.resultado = None
 
-    # Crear botón de retorno
     crear_boton_retorno()
 
-    # Mostrar resultado si está disponible
     if mostrar_radiacion.resultado is not None:
         lbl_resultado = pygame_gui.elements.UILabel(
             relative_rect=pygame.Rect((300, 400), (400, 50)),
@@ -359,18 +332,17 @@ def mostrar_radiacion():
             manager=manager
         )
         ui_elements["radiacion"].append(lbl_resultado)
-        mostrar_radiacion.resultado = None  # Resetear para evitar múltiples etiquetas
+        mostrar_radiacion.resultado = None
 
 # Bucle principal
 clock = pygame.time.Clock()
 ejecutando = True
 while ejecutando:
-    time_delta = clock.tick(60) / 1000.0  # Tiempo entre frames
+    time_delta = clock.tick(60) / 1000.0
     for evento in pygame.event.get():
         if evento.type == pygame.QUIT:
             ejecutando = False
 
-        # Detectar los botones de las simulaciones y otros botones
         if evento.type == pygame_gui.UI_BUTTON_PRESSED:
             if evento.ui_element.text == "Simulación de Convección":
                 pantalla_actual = "conveccion"
@@ -386,114 +358,64 @@ while ejecutando:
                 limpiar_elementos()
             elif evento.ui_element.text == "Calcular":
                 if pantalla_actual == "conveccion":
+                    limpiar_resultado_anterior()  # Limpiar el resultado anterior
                     try:
-                        # Obtener los valores de las cajas de texto
-                        temp_superficie_text = mostrar_conveccion.inputs[0].get_text()
-                        temp_fluido_text = mostrar_conveccion.inputs[1].get_text()
-                        coef_conveccion_text = mostrar_conveccion.inputs[2].get_text()
-                        area_text = mostrar_conveccion.inputs[3].get_text()
-
-                        # Verificar si las cajas de texto tienen valores válidos
-                        if temp_superficie_text and temp_fluido_text and coef_conveccion_text and area_text:
-                            temp_superficie = float(temp_superficie_text)
-                            temp_fluido = float(temp_fluido_text)
-                            coef_conveccion = float(coef_conveccion_text)
-                            area = float(area_text)
-
-                            # Obtener las unidades seleccionadas
-                            unidad_temp_superficie = mostrar_conveccion.dropdowns[0].selected_option
-                            unidad_temp_fluido = mostrar_conveccion.dropdowns[1].selected_option
-                            unidad_area = mostrar_conveccion.dropdowns[3].selected_option
-
-                            # Convertir unidades a las unidades base
-                            temp_superficie = convertir_a_celsius(temp_superficie, unidad_temp_superficie)
-                            temp_fluido = convertir_a_celsius(temp_fluido, unidad_temp_fluido)
-                            area = convertir_a_m2(area, unidad_area)
-
-                            # Realizar el cálculo
-                            resultado = calcular_conveccion(temp_superficie, temp_fluido, coef_conveccion, area)
-                            mostrar_conveccion.resultado = resultado
-                        else:
-                            mostrar_conveccion.resultado = "Error: Valores inválidos"
+                        temp_superficie = float(mostrar_conveccion.inputs[0].get_text())
+                        temp_fluido = float(mostrar_conveccion.inputs[1].get_text())
+                        coef_conveccion = float(mostrar_conveccion.inputs[2].get_text())
+                        area = float(mostrar_conveccion.inputs[3].get_text())
+                        unidad_temp_superficie = mostrar_conveccion.dropdowns[0].selected_option
+                        unidad_temp_fluido = mostrar_conveccion.dropdowns[1].selected_option
+                        unidad_area = mostrar_conveccion.dropdowns[3].selected_option
+                        temp_superficie = convertir_a_celsius(temp_superficie, unidad_temp_superficie[0])
+                        temp_fluido = convertir_a_celsius(temp_fluido, unidad_temp_fluido[0])
+                        area = convertir_a_m2(area, unidad_area[0])
+                        resultado = calcular_conveccion(temp_superficie, temp_fluido, coef_conveccion, area)
+                        mostrar_conveccion.resultado = resultado
                     except ValueError:
-                        # Manejar el error apropiadamente (por ejemplo, mostrar un mensaje de error)
                         mostrar_conveccion.resultado = "Error: Entrada no válida"
 
                 elif pantalla_actual == "conduccion":
+                    limpiar_resultado_anterior()  # Limpiar el resultado anterior
                     try:
-                        # Obtener los valores de las cajas de texto
-                        temp_superficie_text = mostrar_conduccion.inputs[0].get_text()
-                        temp_base_text = mostrar_conduccion.inputs[1].get_text()
-                        conductividad_text = mostrar_conduccion.inputs[2].get_text()
-                        area_text = mostrar_conduccion.inputs[3].get_text()
-                        grosor_text = mostrar_conduccion.inputs[4].get_text()
-
-                        # Verificar si las cajas de texto tienen valores válidos
-                        if temp_superficie_text and temp_base_text and conductividad_text and area_text and grosor_text:
-                            temp_superficie = float(temp_superficie_text)
-                            temp_base = float(temp_base_text)
-                            conductividad = float(conductividad_text)
-                            area = float(area_text)
-                            grosor = float(grosor_text)
-
-                            # Obtener las unidades seleccionadas
-                            unidad_temp_superficie = mostrar_conduccion.dropdowns[0].selected_option
-                            unidad_temp_base = mostrar_conduccion.dropdowns[1].selected_option
-                            unidad_area = mostrar_conduccion.dropdowns[3].selected_option
-                            unidad_grosor = mostrar_conduccion.dropdowns[4].selected_option
-
-                            # Convertir unidades a las unidades base
-                            temp_superficie = convertir_a_celsius(temp_superficie, unidad_temp_superficie)
-                            temp_base = convertir_a_celsius(temp_base, unidad_temp_base)
-                            area = convertir_a_m2(area, unidad_area)
-                            grosor = convertir_a_metros(grosor, unidad_grosor)
-
-                            # Realizar el cálculo
-                            resultado = calcular_conduccion(temp_superficie, temp_base, conductividad, area, grosor)
-                            mostrar_conduccion.resultado = resultado
-                        else:
-                            mostrar_conduccion.resultado = "Error: Valores inválidos"
+                        temp_superficie = float(mostrar_conduccion.inputs[0].get_text())
+                        temp_base = float(mostrar_conduccion.inputs[1].get_text())
+                        conductividad = float(mostrar_conduccion.inputs[2].get_text())
+                        area = float(mostrar_conduccion.inputs[3].get_text())
+                        grosor = float(mostrar_conduccion.inputs[4].get_text())
+                        unidad_temp_superficie = mostrar_conduccion.dropdowns[0].selected_option
+                        unidad_temp_base = mostrar_conduccion.dropdowns[1].selected_option
+                        unidad_area = mostrar_conduccion.dropdowns[3].selected_option
+                        unidad_grosor = mostrar_conduccion.dropdowns[4].selected_option
+                        temp_superficie = convertir_a_celsius(temp_superficie, unidad_temp_superficie[0])
+                        temp_base = convertir_a_celsius(temp_base, unidad_temp_base[0])
+                        area = convertir_a_m2(area, unidad_area[0])
+                        grosor = convertir_a_metros(grosor, unidad_grosor[0])
+                        resultado = calcular_conduccion(temp_superficie, temp_base, conductividad, area, grosor)
+                        mostrar_conduccion.resultado = resultado
                     except ValueError:
-                        # Manejar el error apropiadamente
                         mostrar_conduccion.resultado = "Error: Entrada no válida"
 
                 elif pantalla_actual == "radiacion":
+                    limpiar_resultado_anterior()  # Limpiar el resultado anterior
                     try:
-                        # Obtener los valores de las cajas de texto
-                        temp_objeto_text = mostrar_radiacion.inputs[0].get_text()
-                        temp_ambiente_text = mostrar_radiacion.inputs[1].get_text()
-                        emisividad_text = mostrar_radiacion.inputs[2].get_text()
-                        area_text = mostrar_radiacion.inputs[3].get_text()
-
-                        # Verificar si las cajas de texto tienen valores válidos
-                        if temp_objeto_text and temp_ambiente_text and emisividad_text and area_text:
-                            temp_objeto = float(temp_objeto_text)
-                            temp_ambiente = float(temp_ambiente_text)
-                            emisividad = float(emisividad_text)
-                            area = float(area_text)
-
-                            # Obtener las unidades seleccionadas
-                            unidad_temp_objeto = mostrar_radiacion.dropdowns[0].selected_option
-                            unidad_temp_ambiente = mostrar_radiacion.dropdowns[1].selected_option
-                            unidad_area = mostrar_radiacion.dropdowns[3].selected_option
-
-                            # Convertir unidades a las unidades base
-                            temp_objeto = convertir_a_celsius(temp_objeto, unidad_temp_objeto) + 273.15  # Convertir a Kelvin
-                            temp_ambiente = convertir_a_celsius(temp_ambiente, unidad_temp_ambiente) + 273.15  # Convertir a Kelvin
-                            area = convertir_a_m2(area, unidad_area)
-
-                            # Realizar el cálculo
-                            resultado = calcular_radiacion(temp_objeto, temp_ambiente, emisividad, area)
-                            mostrar_radiacion.resultado = resultado
-                        else:
-                            mostrar_radiacion.resultado = "Error: Valores inválidos"
+                        temp_objeto = float(mostrar_radiacion.inputs[0].get_text())
+                        temp_ambiente = float(mostrar_radiacion.inputs[1].get_text())
+                        emisividad = float(mostrar_radiacion.inputs[2].get_text())
+                        area = float(mostrar_radiacion.inputs[3].get_text())
+                        unidad_temp_objeto = mostrar_radiacion.dropdowns[0].selected_option
+                        unidad_temp_ambiente = mostrar_radiacion.dropdowns[1].selected_option
+                        unidad_area = mostrar_radiacion.dropdowns[3].selected_option
+                        temp_objeto = convertir_a_celsius(temp_objeto, unidad_temp_objeto[0]) + 273.15
+                        temp_ambiente = convertir_a_celsius(temp_ambiente, unidad_temp_ambiente[0]) + 273.15
+                        area = convertir_a_m2(area, unidad_area[0])
+                        resultado = calcular_radiacion(temp_objeto, temp_ambiente, emisividad, area)
+                        mostrar_radiacion.resultado = resultado
                     except ValueError:
-                        # Manejar el error apropiadamente
                         mostrar_radiacion.resultado = "Error: Entrada no válida"
 
         manager.process_events(evento)
 
-    # Dibujar la pantalla según el estado actual
     screen.fill(WHITE)
     if pantalla_actual == "menu":
         mostrar_menu()
@@ -506,9 +428,6 @@ while ejecutando:
 
     manager.update(time_delta)
     manager.draw_ui(screen)
-
-    # Actualizar pantalla
     pygame.display.flip()
 
-# Salir de Pygame
 pygame.quit()
