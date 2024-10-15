@@ -7,22 +7,40 @@ pygame.init()
 # Configuración de la ventana
 screen = pygame.display.set_mode((1000, 800))
 pygame.display.set_caption("ThermoSim")
-
+pygame.display.set_icon(pygame.image.load("Assets\Logo.png"))
 # Crear el manejador de interfaz de pygame_gui sin referencia al archivo 'theme.json'
 manager = pygame_gui.UIManager((1000, 800))
 
 # Colores
-WHITE = (255, 255, 255)
+WHITE = (255, 254, 229)
 BLACK = (0, 0, 0)
 GREY = (200, 200, 200)
 
 # Crear fuentes
 font = pygame.font.Font(None, 36)
-
-# Estado de la aplicación
 pantalla_actual = "menu"
 
-# Parámetros globales para simulaciones
+logo = 'Assets\Logo.png'
+estaticaConveccion = "Assets\Conveccion\Agua0.png"
+imagenesConveccion = ["Assets\Conveccion\Agua1.png", "Assets\Conveccion\Agua2.png", "Assets\Conveccion\Agua3.png"]
+estaticaConduccion = "Assets\Conduccion\Conduccion0.png" 
+imagenesConduccion = ["Assets\Conduccion\Conduccion1.png", "Assets\Conduccion\Conduccion2.png", "Assets\Conduccion\Conduccion3.png"]
+estaticaRadiacion = "Assets\Radiacion\Radiacion0.png"
+imagenesRadiacion = ["Assets\Radiacion\Radiacion1.png", "Assets\Radiacion\Radiacion2.png", "Assets\Radiacion\Radiacion3.png"]
+
+indice_frame = 0
+fps_gif = 3
+temporizador_gif = 0
+estado = "estatica" 
+
+imgLogo = pygame.image.load(logo).convert_alpha()
+imgConduccion = pygame.image.load(estaticaConduccion).convert_alpha()
+framesConduccion = [pygame.image.load(frame).convert_alpha() for frame in imagenesConduccion]
+imgConveccion = pygame.image.load(estaticaConveccion).convert_alpha()
+framesConveccion = [pygame.image.load(frame).convert_alpha() for frame in imagenesConveccion]
+imgRadiacion = pygame.image.load(estaticaRadiacion).convert_alpha()
+framesRadiacion = [pygame.image.load(frame).convert_alpha() for frame in imagenesRadiacion]
+
 parametros_conveccion = {"temp_superficie": 100.0, "temp_fluido": 25.0, "coef_conveccion": 50.0, "area": 2.0}
 parametros_conduccion = {"temp_superficie": 100.0, "temp_base": 25.0, "conductividad": 1.0, "area": 2.0, "grosor": 0.05}
 parametros_radiacion = {"temp_objeto": 500.0, "temp_ambiente": 300.0, "emisividad": 0.85, "area": 2.0}
@@ -34,7 +52,8 @@ ui_elements = {
     "conduccion": [],
     "radiacion": []
 }
-
+def mostrar_imagen(imagen, x, y):
+    screen.blit(imagen, (x, y))
 # Función para limpiar todos los elementos de la interfaz
 def limpiar_elementos():
     for screen_elements in ui_elements.values():
@@ -51,8 +70,6 @@ def limpiar_resultado_anterior():
             elemento.kill()  # Eliminar el elemento de la pantalla
     # Remover de la lista de elementos UI
     ui_elements[pantalla_actual] = [el for el in ui_elements[pantalla_actual] if el.alive()]
-
-# Funciones de conversión de unidades
 
 def convertir_a_celsius(valor, unidad):
     if unidad == "°C":
@@ -76,6 +93,9 @@ def convertir_a_metros(valor, unidad):
 
 # Función para crear el menú principal
 def mostrar_menu():
+    if estado == "estatica":
+        imgLogo_resized = pygame.transform.scale(imgLogo, (300, 300))  # Cambiar el tamaño de la imagen
+        mostrar_imagen(imgLogo_resized, 350, 130)
     if not ui_elements["menu"]:
         lbl_titulo = pygame_gui.elements.UILabel(
             relative_rect=pygame.Rect((350, 100), (300, 50)),
@@ -83,19 +103,19 @@ def mostrar_menu():
             manager=manager
         )
         ui_elements["menu"].append(lbl_titulo)
-
+        
         btn_conveccion = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect((400, 250), (200, 50)),
+            relative_rect=pygame.Rect((400, 450), (200, 50)),
             text="Simulación de Convección",
             manager=manager
         )
         btn_conduccion = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect((400, 350), (200, 50)),
+            relative_rect=pygame.Rect((400, 550), (200, 50)),
             text="Simulación de Conducción",
             manager=manager
         )
         btn_radiacion = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect((400, 450), (200, 50)),
+            relative_rect=pygame.Rect((400, 650), (200, 50)),
             text="Simulación de Radiación",
             manager=manager
         )
@@ -131,6 +151,17 @@ def calcular_radiacion(temp_objeto, temp_ambiente, emisividad, area):
 
 # Función para mostrar la simulación de convección
 def mostrar_conveccion():
+    global indice_frame, temporizador_gif
+    # Mostrar imagen estática o GIF
+    if estado == "estatica":
+        mostrar_imagen(imgConveccion, 700, 200)  # Muestra la imagen de referencia en coordenadas (700, 200)
+    elif estado == "animando":
+        # Mostrar fotograma del GIF
+        mostrar_imagen(framesConveccion[indice_frame], 700, 200)
+        # Actualizar el índice del GIF según el temporizador
+        if pygame.time.get_ticks() - temporizador_gif > 1000 // fps_gif:
+            indice_frame = (indice_frame + 1) % len(framesConveccion)
+            temporizador_gif = pygame.time.get_ticks()
     if not ui_elements["conveccion"]:
         lbl_titulo = pygame_gui.elements.UILabel(
             relative_rect=pygame.Rect((350, 50), (300, 50)),
@@ -198,6 +229,17 @@ def mostrar_conveccion():
 
 # Función para mostrar la simulación de conducción
 def mostrar_conduccion():
+    global indice_frame, temporizador_gif
+    # Mostrar imagen estática o GIF
+    if estado == "estatica":
+        mostrar_imagen(imgConduccion, 700, 200)  # Muestra la imagen de referencia en coordenadas (700, 200)
+    elif estado == "animando":
+        # Mostrar fotograma del GIF
+        mostrar_imagen(framesConduccion[indice_frame], 700, 200)
+        # Actualizar el índice del GIF según el temporizador
+        if pygame.time.get_ticks() - temporizador_gif > 1000 // fps_gif:
+            indice_frame = (indice_frame + 1) % len(framesConduccion)
+            temporizador_gif = pygame.time.get_ticks()
     if not ui_elements["conduccion"]:
         lbl_titulo = pygame_gui.elements.UILabel(
             relative_rect=pygame.Rect((350, 50), (300, 50)),
@@ -266,6 +308,17 @@ def mostrar_conduccion():
 
 # Función para mostrar la simulación de radiación
 def mostrar_radiacion():
+    global indice_frame, temporizador_gif
+    # Mostrar imagen estática o GIF
+    if estado == "estatica":
+        mostrar_imagen(imgRadiacion, 700, 200)  # Muestra la imagen de referencia en coordenadas (700, 200)
+    elif estado == "animando":
+        # Mostrar fotograma del GIF
+        mostrar_imagen(framesRadiacion[indice_frame], 700, 200)
+        # Actualizar el índice del GIF según el temporizador
+        if pygame.time.get_ticks() - temporizador_gif > 1000 // fps_gif:
+            indice_frame = (indice_frame + 1) % len(framesRadiacion)
+            temporizador_gif = pygame.time.get_ticks()
     if not ui_elements["radiacion"]:
         lbl_titulo = pygame_gui.elements.UILabel(
             relative_rect=pygame.Rect((350, 50), (300, 50)),
@@ -354,9 +407,12 @@ while ejecutando:
                 pantalla_actual = "radiacion"
                 limpiar_elementos()
             elif evento.ui_element.text == "Retornar al Menú":
+                estado = "estatica"
                 pantalla_actual = "menu"
                 limpiar_elementos()
             elif evento.ui_element.text == "Calcular":
+                estado = "animando"
+                temporizador_gif = pygame.time.get_ticks()
                 if pantalla_actual == "conveccion":
                     limpiar_resultado_anterior()  # Limpiar el resultado anterior
                     try:
