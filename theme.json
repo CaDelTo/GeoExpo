@@ -17,5 +17,12 @@
                 "normal_text": "#FFFFFF",
                 "hovered_text": "#000000" 
             }
+    },
+    "text_entry_line": {
+        "colours": 
+        {
+            "normal_text": "#FFFFFF",
+            "hovered_text": "#FFFFFF" 
+        }
     }
 }

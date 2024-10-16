@@ -428,7 +428,6 @@ def mostrar_radiacion():
         ui_elements["radiacion"].append(lbl_resultado)
         mostrar_radiacion.resultado = None
 
-# Bucle principal
 clock = pygame.time.Clock()
 ejecutando = True
 while ejecutando:
