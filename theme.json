@@ -1,0 +1,21 @@
+{
+    "defaults": {
+        "font": {
+            "name": "default_font",
+            "size": 14
+        },
+        "colours": 
+        {
+            "normal_text": "#000000",
+            "hovered_text": "#000000" 
+        }
+    },
+    "button": {
+            "colours": 
+            {
+                "hovered_bg": "#DDDDDD",
+                "normal_text": "#FFFFFF",
+                "hovered_text": "#000000" 
+            }
+    }
+}

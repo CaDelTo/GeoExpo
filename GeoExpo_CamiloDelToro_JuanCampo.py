@@ -9,7 +9,7 @@ screen = pygame.display.set_mode((1000, 800))
 pygame.display.set_caption("ThermoSim")
 pygame.display.set_icon(pygame.image.load("Assets\Logo.png"))
 # Crear el manejador de interfaz de pygame_gui sin referencia al archivo 'theme.json'
-manager = pygame_gui.UIManager((1000, 800))
+manager = pygame_gui.UIManager((1000, 800), 'theme.json')
 
 # Colores
 WHITE = (255, 254, 229)
@@ -45,13 +45,13 @@ parametros_conveccion = {"temp_superficie": 100.0, "temp_fluido": 25.0, "coef_co
 parametros_conduccion = {"temp_superficie": 100.0, "temp_base": 25.0, "conductividad": 1.0, "area": 2.0, "grosor": 0.05}
 parametros_radiacion = {"temp_objeto": 500.0, "temp_ambiente": 300.0, "emisividad": 0.85, "area": 2.0}
 
-# Elementos de UI para diferentes pantallas
 ui_elements = {
     "menu": [],
     "conveccion": [],
     "conduccion": [],
     "radiacion": []
 }
+
 def mostrar_imagen(imagen, x, y):
     screen.blit(imagen, (x, y))
 # Función para limpiar todos los elementos de la interfaz
@@ -61,7 +61,6 @@ def limpiar_elementos():
             element.kill()
     for key in ui_elements.keys():
         ui_elements[key] = []
-
 # Función para limpiar solo el resultado anterior
 def limpiar_resultado_anterior():
     # Limpiar solo las etiquetas de resultado en la pantalla actual
@@ -90,7 +89,6 @@ def convertir_a_metros(valor, unidad):
         return valor
     elif unidad == "cm":
         return valor / 100  # 1 m = 100 cm
-
 # Función para crear el menú principal
 def mostrar_menu():
     if estado == "estatica":
@@ -211,6 +209,18 @@ def mostrar_conveccion():
             manager=manager
         )
         ui_elements["conveccion"].append(btn_calcular)
+        explicacion1 = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect((50, 500), (900, 100)),
+            text="La convección es la transferencia de calor por el movimiento de fluidos (líquidos o gases). Este tipo de transferencia de calor es",
+            manager=manager
+        )
+        explicacion2 = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect((50, 520), (900, 100)),
+            text="fundamental en sistemas en los que es necesario el movimiento de fluidos para que el calor se distribuya de manera uniforme",
+            manager=manager
+        )
+        ui_elements["conveccion"].append(explicacion1)
+        ui_elements["conveccion"].append(explicacion2)
 
         mostrar_conveccion.inputs = inputs
         mostrar_conveccion.dropdowns = dropdowns
@@ -290,7 +300,24 @@ def mostrar_conduccion():
             manager=manager
         )
         ui_elements["conduccion"].append(btn_calcular)
-
+        explicacion1 = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect((50, 500), (900, 100)),
+            text="La conducción es la transferencia de calor a través de un material sólido. Se produce cuando las moléculas de una sustancia vibran y",
+            manager=manager
+        )
+        explicacion2 = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect((50, 520), (900, 100)),
+            text="transfieren energía a las moléculas adyacentes. Es un proceso fundamental en muchas aplicaciones industriales en las que los",
+            manager=manager
+        )
+        explicacion3 = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect((50, 540), (900, 100)),
+            text="materiales sólidos son utilizados como aislantes o conductores de calor.",
+            manager=manager
+        )
+        ui_elements["conveccion"].append(explicacion1)
+        ui_elements["conveccion"].append(explicacion2)
+        ui_elements["conveccion"].append(explicacion3)
         mostrar_conduccion.inputs = inputs
         mostrar_conduccion.dropdowns = dropdowns
         mostrar_conduccion.resultado = None
@@ -371,6 +398,20 @@ def mostrar_radiacion():
             manager=manager
         )
         ui_elements["radiacion"].append(btn_calcular)
+        
+        explicacion1 = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect((50, 500), (900, 100)),
+            text="La radiación es la transferencia de calor a través de ondas electromagnéticas. A diferencia de la conducción y la convección,",
+            manager=manager
+        )
+        explicacion2 = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect((50, 520), (900, 100)),
+            text="la radiación no requiere ningún medio y puede producirse en un espacio vacío.",
+            manager=manager
+        )
+        
+        ui_elements["conveccion"].append(explicacion1)
+        ui_elements["conveccion"].append(explicacion2)
 
         mostrar_radiacion.inputs = inputs
         mostrar_radiacion.dropdowns = dropdowns
