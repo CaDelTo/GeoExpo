@@ -7,7 +7,8 @@ width = 1500
 height = 800
 screen = pygame.display.set_mode((width, height))
 pygame.display.set_caption("ThermoSim")
-pygame.display.set_icon(pygame.image.load("Assets\Logo.png"))
+pygame.display.set_icon(pygame.image.load("Assets/Logo.png"))
+# Crear el manejador de interfaz de pygame_gui sin referencia al archivo 'theme.json'
 manager = pygame_gui.UIManager((1000, 800), 'theme.json')
 WHITE = (255, 254, 229)
 BLACK = (0, 0, 0)
@@ -18,7 +19,7 @@ pantalla_actual = "menu"
 logo = 'Assets/Logo.png'
 estaticaConveccion = "Assets/Conveccion/Agua0.png"
 imagenesConveccion = ["Assets/Conveccion/Agua1.png", "Assets/Conveccion/Agua2.png", "Assets/Conveccion/Agua3.png"]
-estaticaConduccion = "Assets/Conduccion/Conduccion0.png"
+estaticaConduccion = "Assets/Conduccion/Conduccion0.png" 
 imagenesConduccion = ["Assets/Conduccion/Conduccion1.png", "Assets/Conduccion/Conduccion2.png", "Assets/Conduccion/Conduccion3.png"]
 estaticaRadiacion = "Assets/Radiacion/Radiacion0.png"
 imagenesRadiacion = ["Assets/Radiacion/Radiacion1.png", "Assets/Radiacion/Radiacion2.png", "Assets/Radiacion/Radiacion3.png"]
