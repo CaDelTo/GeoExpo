@@ -1,32 +1,27 @@
 import pygame
 import pygame_gui
 
-# Inicializar Pygame
 pygame.init()
 
-# Configuración de la ventana
-screen = pygame.display.set_mode((1000, 800))
+width = 1500
+height = 800
+screen = pygame.display.set_mode((width, height))
 pygame.display.set_caption("ThermoSim")
 pygame.display.set_icon(pygame.image.load("Assets\Logo.png"))
-# Crear el manejador de interfaz de pygame_gui sin referencia al archivo 'theme.json'
 manager = pygame_gui.UIManager((1000, 800), 'theme.json')
-
-# Colores
 WHITE = (255, 254, 229)
 BLACK = (0, 0, 0)
 GREY = (200, 200, 200)
-
-# Crear fuentes
 font = pygame.font.Font(None, 36)
 pantalla_actual = "menu"
 
-logo = 'Assets\Logo.png'
-estaticaConveccion = "Assets\Conveccion\Agua0.png"
-imagenesConveccion = ["Assets\Conveccion\Agua1.png", "Assets\Conveccion\Agua2.png", "Assets\Conveccion\Agua3.png"]
-estaticaConduccion = "Assets\Conduccion\Conduccion0.png" 
-imagenesConduccion = ["Assets\Conduccion\Conduccion1.png", "Assets\Conduccion\Conduccion2.png", "Assets\Conduccion\Conduccion3.png"]
-estaticaRadiacion = "Assets\Radiacion\Radiacion0.png"
-imagenesRadiacion = ["Assets\Radiacion\Radiacion1.png", "Assets\Radiacion\Radiacion2.png", "Assets\Radiacion\Radiacion3.png"]
+logo = 'Assets/Logo.png'
+estaticaConveccion = "Assets/Conveccion/Agua0.png"
+imagenesConveccion = ["Assets/Conveccion/Agua1.png", "Assets/Conveccion/Agua2.png", "Assets/Conveccion/Agua3.png"]
+estaticaConduccion = "Assets/Conduccion/Conduccion0.png"
+imagenesConduccion = ["Assets/Conduccion/Conduccion1.png", "Assets/Conduccion/Conduccion2.png", "Assets/Conduccion/Conduccion3.png"]
+estaticaRadiacion = "Assets/Radiacion/Radiacion0.png"
+imagenesRadiacion = ["Assets/Radiacion/Radiacion1.png", "Assets/Radiacion/Radiacion2.png", "Assets/Radiacion/Radiacion3.png"]
 
 indice_frame = 0
 fps_gif = 3
@@ -51,17 +46,14 @@ ui_elements = {
     "conduccion": [],
     "radiacion": []
 }
-
 def mostrar_imagen(imagen, x, y):
     screen.blit(imagen, (x, y))
-# Función para limpiar todos los elementos de la interfaz
 def limpiar_elementos():
     for screen_elements in ui_elements.values():
         for element in screen_elements:
             element.kill()
     for key in ui_elements.keys():
         ui_elements[key] = []
-# Función para limpiar solo el resultado anterior
 def limpiar_resultado_anterior():
     # Limpiar solo las etiquetas de resultado en la pantalla actual
     for elemento in ui_elements[pantalla_actual]:
@@ -69,57 +61,6 @@ def limpiar_resultado_anterior():
             elemento.kill()  # Eliminar el elemento de la pantalla
     # Remover de la lista de elementos UI
     ui_elements[pantalla_actual] = [el for el in ui_elements[pantalla_actual] if el.alive()]
-
-def convertir_a_celsius(valor, unidad):
-    if unidad == "°C":
-        return valor
-    elif unidad == "°F":
-        return (valor - 32) * 5.0 / 9.0
-    elif unidad == "K":
-        return valor - 273.15
-
-def convertir_a_m2(valor, unidad):
-    if unidad == "m²":
-        return valor
-    elif unidad == "cm²":
-        return valor / 10000  # 1 m² = 10,000 cm²
-
-def convertir_a_metros(valor, unidad):
-    if unidad == "m":
-        return valor
-    elif unidad == "cm":
-        return valor / 100  # 1 m = 100 cm
-# Función para crear el menú principal
-def mostrar_menu():
-    if estado == "estatica":
-        imgLogo_resized = pygame.transform.scale(imgLogo, (300, 300))  # Cambiar el tamaño de la imagen
-        mostrar_imagen(imgLogo_resized, 350, 130)
-    if not ui_elements["menu"]:
-        lbl_titulo = pygame_gui.elements.UILabel(
-            relative_rect=pygame.Rect((350, 100), (300, 50)),
-            text="ThermoSim - Menú Principal",
-            manager=manager
-        )
-        ui_elements["menu"].append(lbl_titulo)
-        
-        btn_conveccion = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect((400, 450), (200, 50)),
-            text="Simulación de Convección",
-            manager=manager
-        )
-        btn_conduccion = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect((400, 550), (200, 50)),
-            text="Simulación de Conducción",
-            manager=manager
-        )
-        btn_radiacion = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect((400, 650), (200, 50)),
-            text="Simulación de Radiación",
-            manager=manager
-        )
-        ui_elements["menu"].extend([btn_conveccion, btn_conduccion, btn_radiacion])
-
-# Función para crear el botón de retorno al menú
 def crear_boton_retorno():
     if not any(isinstance(el, pygame_gui.elements.UIButton) and el.text == "Retornar al Menú" for el in ui_elements[pantalla_actual]):
         btn_retorno = pygame_gui.elements.UIButton(
@@ -129,25 +70,66 @@ def crear_boton_retorno():
         )
         ui_elements[pantalla_actual].append(btn_retorno)
 
-# Simulación de Convección
+def convertir_a_celsius(valor, unidad):
+    if unidad == "°C":
+        return valor
+    elif unidad == "°F":
+        return (valor - 32) * 5.0 / 9.0
+    elif unidad == "K":
+        return valor - 273.15
+def convertir_a_m2(valor, unidad):
+    if unidad == "m²":
+        return valor
+    elif unidad == "cm²":
+        return valor / 10000  # 1 m² = 10,000 cm²
+def convertir_a_metros(valor, unidad):
+    if unidad == "m":
+        return valor
+    elif unidad == "cm":
+        return valor / 100  # 1 m = 100 cm
+
+
 def calcular_conveccion(temp_superficie, temp_fluido, coef_conveccion, area):
     delta_T = temp_superficie - temp_fluido
     q = coef_conveccion * area * delta_T  # Transferencia de calor en W
     return q
-
-# Simulación de Conducción
 def calcular_conduccion(temp_superficie, temp_base, conductividad, area, grosor):
     delta_T = temp_superficie - temp_base
     q = (conductividad * area * delta_T) / grosor  # Transferencia de calor en W
     return q
-
-# Simulación de Radiación
 def calcular_radiacion(temp_objeto, temp_ambiente, emisividad, area):
     const_boltzmann = 5.67e-8  # Constante de Stefan-Boltzmann
     q = emisividad * area * const_boltzmann * ((temp_objeto**4) - (temp_ambiente**4))  # Transferencia de calor en W
     return q
 
-# Función para mostrar la simulación de convección
+def mostrar_menu():
+    if estado == "estatica":
+        imgLogo_resized = pygame.transform.scale(imgLogo, (300, 300))  # Cambiar el tamaño de la imagen
+        mostrar_imagen(imgLogo_resized,600, 130)
+    if not ui_elements["menu"]:
+        lbl_titulo = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect((width/2 - 150, 100), (300, 50)),
+            text="ThermoSim - Menú Principal",
+            manager=manager
+        )
+        ui_elements["menu"].append(lbl_titulo)
+        
+        btn_conveccion = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect((width/2 - 100, 450), (200, 50)),
+            text="Simulación de Convección",
+            manager=manager
+        )
+        btn_conduccion = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect((width/2 - 100, 550), (200, 50)),
+            text="Simulación de Conducción",
+            manager=manager
+        )
+        btn_radiacion = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect((width/2 - 100, 650), (200, 50)),
+            text="Simulación de Radiación",
+            manager=manager
+        )
+        ui_elements["menu"].extend([btn_conveccion, btn_conduccion, btn_radiacion])
 def mostrar_conveccion():
     global indice_frame, temporizador_gif
     # Mostrar imagen estática o GIF
@@ -236,8 +218,6 @@ def mostrar_conveccion():
         )
         ui_elements["conveccion"].append(lbl_resultado)
         mostrar_conveccion.resultado = None
-
-# Función para mostrar la simulación de conducción
 def mostrar_conduccion():
     global indice_frame, temporizador_gif
     # Mostrar imagen estática o GIF
@@ -332,8 +312,6 @@ def mostrar_conduccion():
         )
         ui_elements["conduccion"].append(lbl_resultado)
         mostrar_conduccion.resultado = None
-
-# Función para mostrar la simulación de radiación
 def mostrar_radiacion():
     global indice_frame, temporizador_gif
     # Mostrar imagen estática o GIF
@@ -525,5 +503,4 @@ while ejecutando:
     manager.update(time_delta)
     manager.draw_ui(screen)
     pygame.display.flip()
-
 pygame.quit()
