@@ -93,7 +93,6 @@ def convertir_a_metros(valor, unidad):
     elif unidad == "cm":
         return valor / 100  # 1 m = 100 cm
 
-
 def calcular_conveccion(temp_superficie, temp_fluido, coef_conveccion, area):
     delta_T = temp_superficie - temp_fluido
     q = coef_conveccion * area * delta_T  # Transferencia de calor en W
@@ -136,76 +135,153 @@ def mostrar_menu():
         )
         ui_elements["menu"].extend([btn_conveccion, btn_conduccion, btn_radiacion])
 
-def graficar_temp_y_transferencia(temp_inicial, temp_fluido, coef_conveccion, area, tiempo_total):
-    # Parámetros físicos
+def graficar_conveccion(temp_superficie, temp_fluido, coef_conveccion, area, tiempo_total):
     c_p = 4186  # Capacidad calorífica específica del agua en J/kg·K
     rho = 1000  # Densidad del agua en kg/m³
-    volumen = 1  # Supongamos 1 m³ de agua (ajustable según el caso)
-    masa = rho * volumen  # Masa del fluido (kg)
-
+    volumen = 1  # Volumen del fluido
+    masa = rho * volumen  # Masa del agua (kg)
     dt = 0.5  # Incremento de tiempo (segundos)
-    tiempo = np.arange(0, tiempo_total, dt)  # Array de tiempo
+    tiempo = np.arange(0, tiempo_total, dt)
 
-    # Inicializar arrays de resultados para temperatura y transferencia de calor
     temp_cambio = np.zeros_like(tiempo)
     transferencia_calor = np.zeros_like(tiempo)
+    temp_cambio[0] = temp_fluido  # Inicializamos con la temperatura del agua (fluido)
 
-    # Establecer la temperatura inicial
-    temp_cambio[0] = temp_inicial
-
-    # Crear una nueva ventana de matplotlib
     fig, axs = plt.subplots(1, 2, figsize=(10, 5))
-
-    # Configurar la gráfica de Temperatura
-    axs[0].set_title("Cambio de Temperatura con el Tiempo")
-    axs[0].set_xlabel("Tiempo (s)")
-    axs[0].set_ylabel("Temperatura (°C)")
-    line_temp, = axs[0].plot([], [], label="Temperatura", color="b")
-
-    # Configurar la gráfica de Transferencia de Calor
-    axs[1].set_title("Transferencia de Calor con el Tiempo")
-    axs[1].set_xlabel("Tiempo (s)")
-    axs[1].set_ylabel("Transferencia de Calor (W)")
+    fig.patch.set_facecolor((255/255, 254/255, 229/255))  # Fondo de la figura
+    axs[0].set_facecolor((255/255, 254/255, 229/255))  # Fondo del subgráfico de temperatura
+    axs[1].set_facecolor((255/255, 254/255, 229/255))
+    line_temp, = axs[0].plot([], [], label="Temperatura del Agua", color="b")
     line_calor, = axs[1].plot([], [], label="Transferencia de Calor", color="orange")
 
-    # Texto para mostrar el valor actual en las gráficas
-    temp_text = axs[0].text(0.05, 0.95, "", transform=axs[0].transAxes, fontsize=12, verticalalignment='top')
-    calor_text = axs[1].text(0.05, 0.95, "", transform=axs[1].transAxes, fontsize=12, verticalalignment='top')
+    # Texto para mostrar el valor actual
+    temp_text = fig.text(0.3, 0.02, '', fontsize=12)
+    calor_text = fig.text(0.7, 0.02, '', fontsize=12)
 
-    # Simulación de actualización en tiempo real
     for i in range(1, len(tiempo)):
-        # Calcular la transferencia de calor en cada paso de tiempo
-        delta_T = temp_cambio[i - 1] - temp_fluido
+        # Delta de temperatura es la diferencia entre la superficie y el agua
+        delta_T = temp_superficie - temp_cambio[i - 1]  # Ahora el agua se actualiza
         transferencia_calor[i] = coef_conveccion * area * delta_T
+        dT_dt = transferencia_calor[i] * dt / (masa * c_p)  # Cambio de temperatura del agua
+        temp_cambio[i] = temp_cambio[i - 1] + dT_dt  # Actualizamos la temperatura del agua
 
-        # Actualizar la temperatura en el siguiente paso
-        dT_dt = -transferencia_calor[i] * dt / (masa * c_p)  # Cambio en la temperatura
-        temp_cambio[i] = temp_cambio[i - 1] + dT_dt
-
-        # Actualizar los datos de la gráfica en tiempo real
+        # Actualizar gráficos
         line_temp.set_data(tiempo[:i], temp_cambio[:i])
         line_calor.set_data(tiempo[:i], transferencia_calor[:i])
 
-        # Ajustar los límites del eje x para cada paso de tiempo
         axs[0].set_xlim(0, tiempo_total)
         axs[0].set_ylim(np.min(temp_cambio)-5, np.max(temp_cambio)+5)
         axs[1].set_xlim(0, tiempo_total)
         axs[1].set_ylim(np.min(transferencia_calor)-50, np.max(transferencia_calor)+50)
 
-        # Actualizar los textos con los valores actuales
-        temp_text.set_text(f'Temperatura: {temp_cambio[i]:.2f} °C')
-        calor_text.set_text(f'Transferencia de Calor: {transferencia_calor[i]:.2f} W')
+        # Actualizar los textos con el valor actual
+        temp_text.set_text(f'Temperatura del Agua: {temp_cambio[i]:.2f} °C')
+        calor_text.set_text(f'Transferencia Actual: {transferencia_calor[i]:.2f} W')
 
-        # Verificar si la figura está cerrada
+        plt.draw()
+        plt.pause(0.1)
         if not plt.fignum_exists(fig.number):
-            break  # Sale del bucle si se cierra la ventana
+            break  # Sale del bucle si la ventana está cerrada
 
-        plt.draw()  # Dibujar las actualizaciones
-        plt.pause(0.1)  # Pausa para simular el tiempo real
+    plt.close(fig) 
+def graficar_conduccion(temp_superficie, temp_base, conductividad, area, grosor, tiempo_total):
+    c_p = 4186
+    rho = 1000
+    volumen = 1
+    masa = rho * volumen
+    dt = 0.5
+    tiempo = np.arange(0, tiempo_total, dt)
 
-    # La figura permanece abierta al finalizar
-    plt.tight_layout()
-    plt.show()  # Muestra la figura y espera a que se cierre manualmente
+    temp_cambio = np.zeros_like(tiempo)
+    transferencia_calor = np.zeros_like(tiempo)
+    temp_cambio[0] = temp_superficie
+
+    fig, axs = plt.subplots(1, 2, figsize=(10, 5))
+    fig.patch.set_facecolor((255/255, 254/255, 229/255))  # Fondo de la figura
+    axs[0].set_facecolor((255/255, 254/255, 229/255))  # Fondo del subgráfico de temperatura
+    axs[1].set_facecolor((255/255, 254/255, 229/255))
+    line_temp, = axs[0].plot([], [], label="Temperatura", color="b")
+    line_calor, = axs[1].plot([], [], label="Transferencia de Calor", color="orange")
+
+    # Texto para mostrar el valor actual
+    temp_text = fig.text(0.3, 0.02, '', fontsize=12)
+    calor_text = fig.text(0.7, 0.02, '', fontsize=12)
+
+    for i in range(1, len(tiempo)):
+        delta_T = temp_cambio[i - 1] - temp_base
+        transferencia_calor[i] = (conductividad * area * delta_T) / grosor
+        dT_dt = -transferencia_calor[i] * dt / (masa * c_p)
+        temp_cambio[i] = temp_cambio[i - 1] + dT_dt
+
+        line_temp.set_data(tiempo[:i], temp_cambio[:i])
+        line_calor.set_data(tiempo[:i], transferencia_calor[:i])
+
+        axs[0].set_xlim(0, tiempo_total)
+        axs[0].set_ylim(np.min(temp_cambio)-5, np.max(temp_cambio)+5)
+        axs[1].set_xlim(0, tiempo_total)
+        axs[1].set_ylim(np.min(transferencia_calor)-50, np.max(transferencia_calor)+50)
+
+        # Actualizar los textos con el valor actual
+        temp_text.set_text(f'Temperatura Actual: {temp_cambio[i]:.2f} °C')
+        calor_text.set_text(f'Transferencia Actual: {transferencia_calor[i]:.2f} W')
+
+        plt.draw()
+        plt.pause(0.1)
+        if not plt.fignum_exists(fig.number):
+            break  # Sale del bucle si la ventana está cerrada
+
+    plt.close(fig) 
+def graficar_radiacion(temp_objeto, temp_ambiente, emisividad, area, tiempo_total):
+    const_boltzmann = 5.67e-8
+    c_p = 4186
+    rho = 1000
+    volumen = 1
+    masa = rho * volumen
+    dt = 0.5
+    tiempo = np.arange(0, tiempo_total, dt)
+
+    temp_cambio = np.zeros_like(tiempo)
+    transferencia_calor = np.zeros_like(tiempo)
+    temp_cambio[0] = temp_objeto
+
+    fig, axs = plt.subplots(1, 2, figsize=(10, 5))
+    fig.patch.set_facecolor((255/255, 254/255, 229/255))  # Fondo de la figura
+    axs[0].set_facecolor((255/255, 254/255, 229/255))  # Fondo del subgráfico de temperatura
+    axs[1].set_facecolor((255/255, 254/255, 229/255))
+    line_temp, = axs[0].plot([], [], label="Temperatura", color="b")
+    line_calor, = axs[1].plot([], [], label="Transferencia de Calor", color="orange")
+
+    # Texto para mostrar el valor actual
+    temp_text = fig.text(0.3, 0.02, '', fontsize=12)
+    calor_text = fig.text(0.7, 0.02, '', fontsize=12)
+
+    for i in range(1, len(tiempo)):
+        transferencia_calor[i] = (emisividad * area * const_boltzmann * (
+            (temp_cambio[i - 1] + 273.15) ** 4 - (temp_ambiente + 273.15) ** 4))
+        dT_dt = -transferencia_calor[i] * dt / (masa * c_p)
+        temp_cambio[i] = temp_cambio[i - 1] + dT_dt
+
+        line_temp.set_data(tiempo[:i], temp_cambio[:i])
+        line_calor.set_data(tiempo[:i], abs(transferencia_calor[:i]))
+
+        axs[0].set_xlim(0, tiempo_total)
+        axs[0].set_ylim(np.min(temp_cambio)-5, np.max(temp_cambio)+5)
+        axs[1].set_xlim(0, tiempo_total)
+        axs[1].set_ylim(np.min(abs(transferencia_calor))-50, np.max(abs(transferencia_calor))+50)
+
+        # Actualizar los textos con el valor actual
+        temp_text.set_text(f'Temperatura Actual: {temp_cambio[i]:.2f} °C')
+        calor_text.set_text(f'Transferencia Actual: {abs(transferencia_calor[i]):.2f} W')
+
+        plt.draw()
+        plt.pause(0.1)
+
+        # Verificar si la ventana de Matplotlib está cerrada
+        if not plt.fignum_exists(fig.number):
+            break  # Sale del bucle si la ventana está cerrada
+
+    plt.close(fig) 
+
 def mostrar_conveccion():
     global indice_frame, temporizador_gif
     # Mostrar imagen estática o GIF
@@ -227,8 +303,8 @@ def mostrar_conveccion():
 
         etiquetas = [
             ("Temp Superficie:", (50, 150), ["°C", "°F", "K"], "°C"),
-            ("Temp Fluido:", (50, 200), ["°C", "°F", "K"], "°C"),
-            ("Coef. Convección:", (50, 250), ["W/m²·K"], "W/m²·K"),
+            ("Temp Agua:", (50, 200), ["°C", "°F", "K"], "°C"),
+            ("Coef. Trans Calor:", (50, 250), ["W/m²·K"], "W/m²·K"),
             ("Área:", (50, 300), ["m²", "cm²"], "m²"),
             ("Tiempo:", (50, 350), ["s"], "s")
         ]
@@ -306,9 +382,9 @@ def mostrar_conduccion():
         ui_elements["conduccion"].append(lbl_titulo)
 
         etiquetas = [
-            ("Temp Superficie:", (50, 150), ["°C", "°F", "K"], "°C"),
-            ("Temp Base:", (50, 200), ["°C", "°F", "K"], "°C"),
-            ("Conductividad:", (50, 250), ["W/m·K"], "W/m·K"),
+            ("Temp Superficie A:", (50, 150), ["°C", "°F", "K"], "°C"),
+            ("Temp Superficie B:", (50, 200), ["°C", "°F", "K"], "°C"),
+            ("Conductividad Termica:", (50, 250), ["W/m·K"], "W/m·K"),
             ("Área:", (50, 300), ["m²", "cm²"], "m²"),
             ("Grosor:", (50, 350), ["m", "cm"], "m"),
             ("Tiempo:", (50, 400), ["s"], "s")
@@ -344,7 +420,7 @@ def mostrar_conduccion():
 
         btn_calcular = pygame_gui.elements.UIButton(
             relative_rect=pygame.Rect((500, 450), (200, 50)),
-            text="Calcular conveccion",
+            text="Calcular conduccion",
             manager=manager
         )
         ui_elements["conduccion"].append(btn_calcular)
@@ -363,9 +439,9 @@ def mostrar_conduccion():
             text="materiales sólidos son utilizados como aislantes o conductores de calor.",
             manager=manager
         )
-        ui_elements["conveccion"].append(explicacion1)
-        ui_elements["conveccion"].append(explicacion2)
-        ui_elements["conveccion"].append(explicacion3)
+        ui_elements["conduccion"].append(explicacion1)
+        ui_elements["conduccion"].append(explicacion2)
+        ui_elements["conduccion"].append(explicacion3)
         mostrar_conduccion.inputs = inputs
         mostrar_conduccion.dropdowns = dropdowns
         mostrar_conduccion.resultado = None
@@ -441,7 +517,7 @@ def mostrar_radiacion():
 
         btn_calcular = pygame_gui.elements.UIButton(
             relative_rect=pygame.Rect((500, 400), (200, 50)),
-            text="Calcular Radiación",
+            text="Calcular radiacion",
             manager=manager
         )
         ui_elements["radiacion"].append(btn_calcular)
@@ -558,7 +634,6 @@ while ejecutando:
                         mostrar_radiacion.resultado = "Error: Entrada no válida"
             elif evento.ui_element.text == "Calcular conveccion":
                 # Leer valores de entrada
-                print('Calculando...')
                 temp_superficie = float(mostrar_conveccion.inputs[0].get_text())
                 temp_fluido = float(mostrar_conveccion.inputs[1].get_text())
                 coef_conveccion = float(mostrar_conveccion.inputs[2].get_text())
@@ -566,7 +641,28 @@ while ejecutando:
                 tiempo = float(mostrar_conveccion.inputs[4].get_text())
 
                 # Graficar en una nueva ventana
-                graficar_temp_y_transferencia(temp_superficie, temp_fluido, coef_conveccion, area, tiempo)
+                graficar_conveccion(temp_superficie, temp_fluido, coef_conveccion, area, tiempo)
+            elif evento.ui_element.text == "Calcular conduccion":
+                # Leer valores de entrada
+                temp_superficie = float(mostrar_conduccion.inputs[0].get_text())
+                temp_base = float(mostrar_conduccion.inputs[1].get_text())
+                conductividad = float(mostrar_conduccion.inputs[2].get_text())
+                area = float(mostrar_conduccion.inputs[3].get_text())
+                grosor = float(mostrar_conduccion.inputs[4].get_text())
+                tiempo = float(mostrar_conduccion.inputs[5].get_text())
+
+                # Graficar en una nueva ventana
+                graficar_conduccion(temp_superficie, temp_base, conductividad, area, grosor, tiempo)
+            elif evento.ui_element.text == "Calcular radiacion":
+                # Leer valores de entrada
+                temp_objeto = float(mostrar_radiacion.inputs[0].get_text())
+                temp_ambiente = float(mostrar_radiacion.inputs[1].get_text())
+                emisividad = float(mostrar_radiacion.inputs[2].get_text())
+                area = float(mostrar_radiacion.inputs[3].get_text())
+                tiempo = float(mostrar_radiacion.inputs[4].get_text())
+
+                # Graficar en una nueva ventana
+                graficar_radiacion(temp_objeto, temp_ambiente, emisividad, area, tiempo)
         manager.process_events(evento)
 
     screen.fill(WHITE)
