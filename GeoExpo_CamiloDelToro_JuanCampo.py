@@ -6,19 +6,23 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 import time
 pygame.init()
 
-width = 1500
+# Cambio de resolución a 1000x800
+width = 1000
 height = 800
 screen = pygame.display.set_mode((width, height))
 pygame.display.set_caption("ThermoSim")
 pygame.display.set_icon(pygame.image.load("Assets/Logo.png"))
-# Crear el manejador de interfaz de pygame_gui sin referencia al archivo 'theme.json'
-manager = pygame_gui.UIManager((1000, 800), 'theme.json')
+manager = pygame_gui.UIManager((width, height), 'theme.json')
+
+# Colores mejorados
 WHITE = (255, 254, 229)
 BLACK = (0, 0, 0)
 GREY = (200, 200, 200)
+BLUE = (0, 123, 255)
 font = pygame.font.Font(None, 36)
 pantalla_actual = "menu"
 
+# Rutas de imágenes
 logo = 'Assets/Logo.png'
 estaticaConveccion = "Assets/Conveccion/Agua0.png"
 imagenesConveccion = ["Assets/Conveccion/Agua1.png", "Assets/Conveccion/Agua2.png", "Assets/Conveccion/Agua3.png"]
@@ -27,11 +31,13 @@ imagenesConduccion = ["Assets/Conduccion/Conduccion1.png", "Assets/Conduccion/Co
 estaticaRadiacion = "Assets/Radiacion/Radiacion0.png"
 imagenesRadiacion = ["Assets/Radiacion/Radiacion1.png", "Assets/Radiacion/Radiacion2.png", "Assets/Radiacion/Radiacion3.png"]
 
+# Configuración de imágenes y animaciones
 indice_frame = 0
 fps_gif = 3
 temporizador_gif = 0
 estado = "estatica" 
 
+# Carga de imágenes
 imgLogo = pygame.image.load(logo).convert_alpha()
 imgConduccion = pygame.image.load(estaticaConduccion).convert_alpha()
 framesConduccion = [pygame.image.load(frame).convert_alpha() for frame in imagenesConduccion]
@@ -40,6 +46,7 @@ framesConveccion = [pygame.image.load(frame).convert_alpha() for frame in imagen
 imgRadiacion = pygame.image.load(estaticaRadiacion).convert_alpha()
 framesRadiacion = [pygame.image.load(frame).convert_alpha() for frame in imagenesRadiacion]
 
+# Parámetros por defecto
 parametros_conveccion = {"temp_superficie": 100.0, "temp_fluido": 25.0, "coef_conveccion": 50.0, "area": 2.0}
 parametros_conduccion = {"temp_superficie": 100.0, "temp_base": 25.0, "conductividad": 1.0, "area": 2.0, "grosor": 0.05}
 parametros_radiacion = {"temp_objeto": 500.0, "temp_ambiente": 300.0, "emisividad": 0.85, "area": 2.0}
@@ -50,6 +57,15 @@ ui_elements = {
     "conduccion": [],
     "radiacion": []
 }
+
+# Funciones de graficación mejoradas
+def configurar_estilo_grafico():
+    plt.style.use('seaborn')
+    plt.rcParams['figure.facecolor'] = '#FFFEE5'
+    plt.rcParams['axes.facecolor'] = '#FFFEE5'
+    plt.rcParams['grid.color'] = '#CCCCCC'
+    plt.rcParams['grid.linestyle'] = '--'
+    plt.rcParams['grid.alpha'] = 0.5
 
 def mostrar_imagen(imagen, x, y):
     screen.blit(imagen, (x, y))
@@ -108,32 +124,52 @@ def calcular_radiacion(temp_objeto, temp_ambiente, emisividad, area):
 
 def mostrar_menu():
     if estado == "estatica":
-        imgLogo_resized = pygame.transform.scale(imgLogo, (300, 300))  # Cambiar el tamaño de la imagen
-        mostrar_imagen(imgLogo_resized,600, 130)
+        imgLogo_resized = pygame.transform.scale(imgLogo, (250, 250))
+        mostrar_imagen(imgLogo_resized, (width - 250) // 2, 100)
+    
     if not ui_elements["menu"]:
         lbl_titulo = pygame_gui.elements.UILabel(
-            relative_rect=pygame.Rect((width/2 - 150, 100), (300, 50)),
+            relative_rect=pygame.Rect((width/2 - 150, 50), (300, 50)),
             text="ThermoSim - Menú Principal",
             manager=manager
         )
         ui_elements["menu"].append(lbl_titulo)
         
+        # Botones centrados y con mejor espaciado
         btn_conveccion = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect((width/2 - 100, 450), (200, 50)),
+            relative_rect=pygame.Rect((width/2 - 100, 400), (200, 50)),
             text="Simulación de Convección",
             manager=manager
         )
         btn_conduccion = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect((width/2 - 100, 550), (200, 50)),
+            relative_rect=pygame.Rect((width/2 - 100, 480), (200, 50)),
             text="Simulación de Conducción",
             manager=manager
         )
         btn_radiacion = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect((width/2 - 100, 650), (200, 50)),
+            relative_rect=pygame.Rect((width/2 - 100, 560), (200, 50)),
             text="Simulación de Radiación",
             manager=manager
         )
         ui_elements["menu"].extend([btn_conveccion, btn_conduccion, btn_radiacion])
+
+def get_temperature_color(temp, temp_fluido, temp_superficie):
+    # Normalizar temperatura entre temp_fluido y temp_superficie
+    norm_temp = (temp - temp_fluido) / (temp_superficie - temp_fluido)
+    
+    if norm_temp <= 0.5:
+        # Interpolar entre azul y naranja para la primera mitad
+        r = int(255 * (norm_temp * 2))  # Rojo aumenta de 0 a 255
+        g = int(165 * (norm_temp * 2))  # Verde aumenta de 0 a 165 (para naranja)
+        b = int(255 * (1 - norm_temp * 2))  # Azul disminuye de 255 a 0
+    else:
+        # Interpolar entre naranja y rojo para la segunda mitad
+        norm_temp_adjusted = (norm_temp - 0.5) * 2  # Ajustar a rango 0-1
+        r = 255  # Rojo se mantiene en 255
+        g = int(165 * (1 - norm_temp_adjusted))  # Verde disminuye de 165 a 0
+        b = 0  # Azul se mantiene en 0
+    
+    return (r, g, b)
 
 def graficar_conveccion(temp_superficie, temp_fluido, coef_conveccion, area, tiempo_total):
     c_p = 4186  # Capacidad calorífica específica del agua en J/kg·K
@@ -147,43 +183,79 @@ def graficar_conveccion(temp_superficie, temp_fluido, coef_conveccion, area, tie
     transferencia_calor = np.zeros_like(tiempo)
     temp_cambio[0] = temp_fluido  # Inicializamos con la temperatura del agua (fluido)
 
-    fig, axs = plt.subplots(1, 2, figsize=(10, 5))
-    fig.patch.set_facecolor((255/255, 254/255, 229/255))  # Fondo de la figura
-    axs[0].set_facecolor((255/255, 254/255, 229/255))  # Fondo del subgráfico de temperatura
-    axs[1].set_facecolor((255/255, 254/255, 229/255))
-    line_temp, = axs[0].plot([], [], label="Temperatura del Agua", color="b")
-    line_calor, = axs[1].plot([], [], label="Transferencia de Calor", color="orange")
+    # Crear figura con 2 subplots: temperatura y transferencia de calor
+    fig = plt.figure(figsize=(8, 4))
+    ax_temp = fig.add_subplot(121)
+    ax_calor = fig.add_subplot(122)
+
+    # Configurar fondos
+    fig.patch.set_facecolor((255/255, 254/255, 229/255))
+    ax_temp.set_facecolor((255/255, 254/255, 229/255))
+    ax_calor.set_facecolor((255/255, 254/255, 229/255))
+
+    line_temp, = ax_temp.plot([], [], label="Temperatura del Agua", color="b")
+    line_calor, = ax_calor.plot([], [], label="Transferencia de Calor", color="orange")
 
     # Texto para mostrar el valor actual
-    temp_text = fig.text(0.3, 0.02, '', fontsize=12)
-    calor_text = fig.text(0.7, 0.02, '', fontsize=12)
+    temp_text = fig.text(0.2, 0.02, '', fontsize=12)
+    calor_text = fig.text(0.6, 0.02, '', fontsize=12)
+
+    # Crear una superficie de pygame para el indicador de color
+    indicator_surface = pygame.Surface((116, 92))
+    indicator_rect = pygame.Rect(767, 275, 300, 50)  # Posición y tamaño del indicador
 
     for i in range(1, len(tiempo)):
         # Delta de temperatura es la diferencia entre la superficie y el agua
-        delta_T = temp_superficie - temp_cambio[i - 1]  # Ahora el agua se actualiza
+        delta_T = temp_superficie - temp_cambio[i - 1]
         transferencia_calor[i] = coef_conveccion * area * delta_T
-        dT_dt = transferencia_calor[i] * dt / (masa * c_p)  # Cambio de temperatura del agua
-        temp_cambio[i] = temp_cambio[i - 1] + dT_dt  # Actualizamos la temperatura del agua
+        dT_dt = transferencia_calor[i] * dt / (masa * c_p)
+        temp_cambio[i] = temp_cambio[i - 1] + dT_dt
 
-        # Actualizar gráficos
+        # Actualizar gráficos de matplotlib
         line_temp.set_data(tiempo[:i], temp_cambio[:i])
         line_calor.set_data(tiempo[:i], transferencia_calor[:i])
 
-        axs[0].set_xlim(0, tiempo_total)
-        axs[0].set_ylim(np.min(temp_cambio)-5, np.max(temp_cambio)+5)
-        axs[1].set_xlim(0, tiempo_total)
-        axs[1].set_ylim(np.min(transferencia_calor)-50, np.max(transferencia_calor)+50)
+        ax_temp.set_xlim(0, tiempo_total)
+        ax_temp.set_ylim(min(temp_fluido, temp_cambio[i]) - 5, max(temp_superficie, temp_cambio[i]) + 5)
+        ax_calor.set_xlim(0, tiempo_total)
+        ax_calor.set_ylim(0, np.max(transferencia_calor) + 50)
+
+        # Actualizar títulos y etiquetas
+        ax_temp.set_title("Temperatura vs Tiempo")
+        ax_calor.set_title("Transferencia de Calor vs Tiempo")
+        ax_temp.set_xlabel("Tiempo (s)")
+        ax_calor.set_xlabel("Tiempo (s)")
+        ax_temp.set_ylabel("Temperatura (°C)")
+        ax_calor.set_ylabel("Transferencia de Calor (W)")
 
         # Actualizar los textos con el valor actual
         temp_text.set_text(f'Temperatura del Agua: {temp_cambio[i]:.2f} °C')
         calor_text.set_text(f'Transferencia Actual: {transferencia_calor[i]:.2f} W')
 
-        plt.draw()
-        plt.pause(0.1)
-        if not plt.fignum_exists(fig.number):
-            break  # Sale del bucle si la ventana está cerrada
+        # Actualizar el indicador de color en pygame
+        color = get_temperature_color(temp_cambio[i], temp_fluido, temp_superficie)
+        indicator_surface.fill(color)
+        screen.blit(indicator_surface, indicator_rect)
 
-    plt.close(fig) 
+        # Añadir texto encima y debajo del indicador
+        font = pygame.font.Font(None, 24)
+        temp_max_text = font.render(f"{temp_superficie:.1f}°C", True, (0, 0, 0))
+        temp_min_text = font.render(f"{temp_fluido:.1f}°C", True, (0, 0, 0))
+        screen.blit(temp_max_text, (600, 180))
+        screen.blit(temp_min_text, (600, 410))
+        
+        # Título del indicador
+        indicator_title = font.render("Indicador de Temp.", True, (0, 0, 0))
+        screen.blit(indicator_title, (580, 150))
+
+        plt.draw()
+        pygame.display.flip()
+        plt.pause(0.1)
+
+        if not plt.fignum_exists(fig.number):
+            break
+
+    plt.close(fig)
 def graficar_conduccion(temp_superficie, temp_base, conductividad, area, grosor, tiempo_total):
     c_p = 4186
     rho = 1000
@@ -217,7 +289,7 @@ def graficar_conduccion(temp_superficie, temp_base, conductividad, area, grosor,
         line_calor.set_data(tiempo[:i], transferencia_calor[:i])
 
         axs[0].set_xlim(0, tiempo_total)
-        axs[0].set_ylim(np.min(temp_cambio)-5, np.max(temp_cambio)+5)
+        axs[0].set_ylim(0, np.max(temp_cambio)+5)
         axs[1].set_xlim(0, tiempo_total)
         axs[1].set_ylim(np.min(transferencia_calor)-50, np.max(transferencia_calor)+50)
 
@@ -230,7 +302,7 @@ def graficar_conduccion(temp_superficie, temp_base, conductividad, area, grosor,
         if not plt.fignum_exists(fig.number):
             break  # Sale del bucle si la ventana está cerrada
 
-    plt.close(fig) 
+    plt.close(fig)
 def graficar_radiacion(temp_objeto, temp_ambiente, emisividad, area, tiempo_total):
     const_boltzmann = 5.67e-8
     c_p = 4186
@@ -265,9 +337,9 @@ def graficar_radiacion(temp_objeto, temp_ambiente, emisividad, area, tiempo_tota
         line_calor.set_data(tiempo[:i], abs(transferencia_calor[:i]))
 
         axs[0].set_xlim(0, tiempo_total)
-        axs[0].set_ylim(np.min(temp_cambio)-5, np.max(temp_cambio)+5)
+        axs[0].set_ylim(0, np.max(temp_cambio)+5)
         axs[1].set_xlim(0, tiempo_total)
-        axs[1].set_ylim(np.min(abs(transferencia_calor))-50, np.max(abs(transferencia_calor))+50)
+        axs[1].set_ylim(0, np.max(abs(transferencia_calor))+50)
 
         # Actualizar los textos con el valor actual
         temp_text.set_text(f'Temperatura Actual: {temp_cambio[i]:.2f} °C')
@@ -280,7 +352,7 @@ def graficar_radiacion(temp_objeto, temp_ambiente, emisividad, area, tiempo_tota
         if not plt.fignum_exists(fig.number):
             break  # Sale del bucle si la ventana está cerrada
 
-    plt.close(fig) 
+    plt.close(fig)
 
 def mostrar_conveccion():
     global indice_frame, temporizador_gif
